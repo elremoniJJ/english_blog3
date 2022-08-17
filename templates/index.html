@@ -1,0 +1,9 @@
+<h1>Hello world</h1>
+
+<p>Practicing web sites</p>
+<br>
+<h3>Favourite pizzas:</h3>
+{% for pizza in favourite_pizza %}
+	<h4>{{ pizza|string|reverse }}</h4>
+	
+{% endfor %}
