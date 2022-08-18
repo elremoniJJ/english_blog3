@@ -1,9 +1,28 @@
-<h1>Hello world</h1>
 
-<p>Practicing web sites</p>
-<br>
-<h3>Favourite pizzas:</h3>
-{% for pizza in favourite_pizza %}
-	<h4>{{ pizza|string|reverse }}</h4>
-	
-{% endfor %}
+{% extends 'base.html' %}
+
+{% block content %}
+
+	{% for message in get_flashed_messages() %}
+		<div class="alert alert-primary alert-dismissible fade show" role="alert">
+  			{{ message }}
+  			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+
+	{% endfor %}
+
+	<h3>Date:</h3> <h4>{{ date }}</h4><br>
+	<h3>Time:</h3> <h4>{{ time }}</h4><br><br>
+
+	<h1>Welcome to English blogging!</h1><br>
+	<h3>Register, login and posting links are all in above navigation bar</h3><br>
+
+	<br><br>	
+	<h4>To create a similar website, check out:</h4><br>
+	<h3><a href="comdemy.com">Codemy</a></h3><br>
+	<h3><a href="coreyms.com">Corey MS</a></h3>
+
+	<br><br>	
+	<br><br>	
+
+{% endblock %}
