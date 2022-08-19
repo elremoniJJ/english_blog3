@@ -18,15 +18,15 @@
 		<table class="table table-hover table-bordered table-striped">
 			<tr>
 				<td>#</td>
-				<td>Title</td>
-				<td>Author</td>
-				<td>Date</td>
+				<td><strong>Title</strong></td>
+				<td><strong>Author</strong></td>
+				<td><strong>Date</strong></td>
 			</tr>									
 		{% for post in posts %}
 			<tr>
 				<td>{{ post.id }}</td>
 				<td><a href="{{ url_for('post', id=post.id) }}">{{ post.title }}</a></td>
-				<td>{{ post.author }}</td>
+				<td>{{ post.poster.name }}</td>
 				<td>{{ post.date_posted.strftime('%Y, %b %d, %H:%M:%S') }}</td>
 			</tr>
 		{% endfor %}

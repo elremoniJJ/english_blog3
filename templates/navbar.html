@@ -28,24 +28,27 @@
 
     </ul>
 
+
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('all_posts') }}">All Posts</a>
+        </li>
 
         {% if current_user.is_authenticated %}
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('add_post') }}">Add Post</a>
           </li>
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('admin') }}">Admin</a>
+          </li>          
         {% else %}
 
         {% endif %}        
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('all_posts') }}">All Posts</a>
-        </li>
-
       </ul>
     
-      <form class="d-flex" role="search">
-        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
+      <form method="POST" action="{{ url_for('search') }}" class="d-flex" role="search"> {{ form.hidden_tag() }}
+        <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search", name="searched">
         <button class="btn btn-outline-primary" type="submit">Search</button>
       </form>
     </div>

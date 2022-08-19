@@ -8,7 +8,8 @@
 #	5. Forms
 #	6. User routes
 #	7. Post routes
-#	8. Error routes
+#	8. Search function
+#	9. Error routes
 
 
 
@@ -39,7 +40,9 @@ from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField 
 from wtforms.validators import DataRequired, EqualTo, Length
-from wtforms.widgets import TextArea
+#from wtforms.widgets import TextArea
+from flask_ckeditor import CKEditor, CKEditorField
+
 from flask_login import (UserMixin, login_user, LoginManager, 
 						 login_required, logout_user, current_user)
 
@@ -49,7 +52,7 @@ from flask_migrate import Migrate
 from werkzeug.security import generate_password_hash, check_password_hash
 
 from datetime import datetime
-from pytz import timezone
+import pytz
 
 
 
@@ -83,7 +86,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
+ckeditor = CKEditor(app)
 
 
 
@@ -143,28 +146,25 @@ def load_user(user_id):
 #The Models
 
 class Posts(db.Model):
-	tz = timezone('Asia/Ho_Chi_Minh')
 
 	id = db.Column(db.Integer, primary_key=True)
 	title = db.Column(db.String(50), nullable=False)
 	content = db.Column(db.Text)
-	#author = db.Column(db.String(50))
-	date_posted = db.Column(db.DateTime, default=datetime.now(tz))
+	date_posted = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')))
 	slug = db.Column(db.String(255))
+
 	#Create foreign key to link users to their posts
 	poster_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
 
 class Users(db.Model, UserMixin):
-	tz = timezone('Asia/Ho_Chi_Minh')
 
 	id = db.Column(db.Integer, primary_key=True)
 	username = db.Column(db.String(50), unique=True)
 	name = db.Column(db.String(50), nullable=False)
 	email = db.Column(db.String(100), unique=True)
 	favorite_color = db.Column(db.String(50))
-	date_added = db.Column(db.DateTime, default=datetime.now(tz))
-
+	date_added = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')))
 	password_hash = db.Column(db.String(128))
 
 	# User can have many posts
@@ -180,7 +180,6 @@ class Users(db.Model, UserMixin):
 
 	def verify_password(self, password):
 		return check_password_hash(self.password_hash, password)
-
 
 	#Create a string
 	def __repr__(self):
@@ -224,8 +223,7 @@ class UserForm(FlaskForm):
 
 class PostForm(FlaskForm):
 	title = StringField("Title", validators=[DataRequired()])
-	content = StringField("Content", validators=[DataRequired()], widget=TextArea())
-	author = StringField("Author", validators=[DataRequired()])
+	content = CKEditorField("Content", validators=[DataRequired()])
 	slug = StringField("Slug", validators=[DataRequired()])
 	submit = SubmitField("Submit")
 
@@ -236,11 +234,14 @@ class LoginForm(FlaskForm):
 	submit = SubmitField("Submit")
 
 
-class NamerForm(FlaskForm):
-	name = StringField("What is your name?", validators=[DataRequired()])
+class SearchForm(FlaskForm):
+	searched = StringField("Searched", validators=[DataRequired()])
 	submit = SubmitField("Submit")
 
-
+@app.context_processor
+def base():
+	form = SearchForm()
+	return dict(form=form)
 
 
 
@@ -267,10 +268,21 @@ class NamerForm(FlaskForm):
 
 @app.route('/')
 def index():
-	tz = timezone('Asia/Ho_Chi_Minh')
+	tz = pytz.timezone('Asia/Ho_Chi_Minh')
 	date = datetime.now(tz).strftime("%Y, %b %d")
 	time = datetime.now(tz).strftime("%H:%M:%S")
 	return render_template("index.html", date=date, time=time)
+
+
+@app.route('/admin')
+@login_required
+def admin():
+	if current_user.id == 1:
+		users = Users.query.all()
+		posts = Posts.query.all()
+		return render_template("admin.html", users=users, posts=posts)
+	else:
+		return redirect(url_for('index'))
 
 
 @app.route('/user/add', methods=['GET', 'POST'])
@@ -289,7 +301,8 @@ def add_user():
 						 username=form.username.data,
 						 email=form.email.data,
 						 favorite_color=form.favorite_color.data,
-						 password_hash=hashed_pw)
+						 password_hash=hashed_pw,
+						 date_added=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')))
 
 			try:
 				db.session.add(user)
@@ -443,14 +456,18 @@ def dashboard():
 @login_required
 def add_post():
 	form = PostForm()
+
 	if form.validate_on_submit():
+
+		poster = current_user.id
+
 		post = Posts(title=form.title.data,
 					 content= form.content.data,
-					 author=form.author.data,
-					 slug=form.slug.data)
+					 poster_id=poster,
+					 slug=form.slug.data,
+					 date_posted=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')))
 		form.title.data = ''
 		form.content.data = ''
-		form.author.data = ''
 		form.slug.data = ''
 
 		db.session.add(post)
@@ -480,23 +497,30 @@ def post(id):
 @login_required
 def edit_post(id):
 	post = Posts.query.get_or_404(id)
-	form = PostForm()	
-	if form.validate_on_submit():
-		post.title = form.title.data
-		post.author = form.author.data
-		post.slug = form.slug.data
-		post.content = form.content.data 
+	if post.poster.id == current_user.id:
+		form = PostForm()	
+		if form.validate_on_submit():
+			post.title = form.title.data
+			post.slug = form.slug.data
+			post.content = form.content.data 
 
-		db.session.add(post)
-		db.session.commit()
-		flash('Post has been updated!')
-		return redirect(url_for('post', id=post.id))
+			try:
+				db.session.add(post)
+				db.session.commit()
+				flash('Post has been updated!')
+				return redirect(url_for('post', id=post.id))
 
-	form.title.data = post.title
-	form.author.data = post.author
-	form.slug.data = post.slug
-	form.content.data = post.content
-	return render_template('edit_post.html', form=form, id=post.id)
+			except:
+				flash('Something went wrong :/ Please try again later')
+				return redirect(url_for('post', id=post.id))
+
+		form.title.data = post.title
+		form.slug.data = post.slug
+		form.content.data = post.content
+		return render_template('edit_post.html', form=form, id=post.id)
+
+	else:
+		return redirect(url_for('all_posts'))		
 
 
 #Specific Post - Delete
@@ -504,16 +528,59 @@ def edit_post(id):
 @login_required
 def delete_post(id):
 	post = Posts.query.get_or_404(id)
-	try:
-		db.session.delete(post)
-		db.session.commit()
-		flash('Post has been deleted!')
+	if post.poster.id == current_user.id:
+		try:
+			db.session.delete(post)
+			db.session.commit()
+			flash('Post has been deleted!')
+			return redirect(url_for('all_posts'))
+
+		except:
+			flash('Something went wrong :/ Please try again later')
+			return redirect(url_for('all_posts'))
+
+	else:
 		return redirect(url_for('all_posts'))
 
-	except:
-		flash('Something went wrong :/ Please try again later')
-		return redirect(url_for('all_posts'))
 
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
+###################################################################
+#Search function
+@app.route('/search', methods=['POST'])
+def search():
+	form = SearchForm()
+	posts = Posts.query
+
+	if form.validate_on_submit():
+		post.searched = form.searched.data
+		
+		posts = posts.filter(Posts.content.like('%' + post.searched + '%'))
+		posts = posts.order_by(Posts.title).all()
+
+		return render_template('searched.html', form=form, 
+												searched = post.searched,
+												posts=posts)
+
+#
 
 
 
@@ -538,7 +605,6 @@ def delete_post(id):
 
 ###################################################################
 #Error Routes
-
 @app.errorhandler(404)
 def page_not_found(e):
 	return render_template("404.html"), 404
