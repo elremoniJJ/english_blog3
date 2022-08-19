@@ -38,9 +38,10 @@
 
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
-from wtforms import StringField, SubmitField, PasswordField, BooleanField 
+from flask_wtf.file import FileField
+from wtforms import (StringField, SubmitField, PasswordField, 
+					 BooleanField) 
 from wtforms.validators import DataRequired, EqualTo, Length
-#from wtforms.widgets import TextArea
 from flask_ckeditor import CKEditor, CKEditorField
 
 from flask_login import (UserMixin, login_user, LoginManager, 
@@ -50,6 +51,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
+import uuid as uuid
+import os
 
 from datetime import datetime
 import pytz
@@ -83,6 +87,9 @@ app = Flask(__name__)
 
 app.config['SECRET_KEY'] = "secret_key"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+UPLOAD_FOLDER = "static/images/"
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -165,6 +172,7 @@ class Users(db.Model, UserMixin):
 	email = db.Column(db.String(100), unique=True)
 	favorite_color = db.Column(db.String(50))
 	date_added = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Ho_Chi_Minh')))
+	profile_pic = db.Column(db.String(), nullable=True)
 	password_hash = db.Column(db.String(128))
 
 	# User can have many posts
@@ -218,6 +226,7 @@ class UserForm(FlaskForm):
 	favorite_color = StringField("Favourite colour")
 	password_hash = PasswordField("Password", validators=[DataRequired(), EqualTo('confirm_password', message='Please check your password')])
 	confirm_password = PasswordField("Confirm Password", validators=[DataRequired()])	
+	profile_pic = FileField("Profile Pic")
 	submit = SubmitField("Submit")
 
 
@@ -405,8 +414,16 @@ def dashboard():
 		name_to_update.name = request.form['name']
 		name_to_update.email = request.form['email']
 		name_to_update.favorite_color = request.form['favorite_color']
-		try:
 
+		profile_pic_upload = request.files['profile_pic']
+
+		pic_filename = secure_filename(profile_pic_upload.filename)
+		pic_name = str(uuid.uuid1()) + "_" + pic_filename
+		name_to_update.profile_pic = pic_name
+
+		profile_pic_upload.save(os.path.join(app.config['UPLOAD_FOLDER'], pic_name))
+
+		try:
 			db.session.commit()
 			flash("User updated successfully!")
 			return render_template("dashboard.html",

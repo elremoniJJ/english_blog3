@@ -25,29 +25,40 @@
 	    <h5 class="card-title">Current user information:</h5>
 	    <p class="card-text">
 
-			<strong>Username: </strong>
-			{{ current_user.username }}<br>
-			
-			<strong>Email: </strong>
-			{{ current_user.email }}<br>
-			
-			<strong>Favourite colour: </strong>
-			{{ current_user.favorite_color }}<br>
-			
-			<strong>Date joined: </strong>
-			{{ current_user.date_added.strftime('%Y, %b %d, %H:%M:%S') }}<br>
-			
-			<strong>User id: </strong>
-			{{ current_user.id }}<br>
-			
-			<strong>User hashed password: </strong>
-			{{ current_user.password_hash }}<br>
+	    	<div class="container">
+	    		<div class="row">
+	    			<div class="col-8">
 
+						<strong>Username: </strong>
+						{{ current_user.username }}<br>
+						
+						<strong>Email: </strong>
+						{{ current_user.email }}<br>
+						
+						<strong>Favourite colour: </strong>
+						{{ current_user.favorite_color }}<br>
+						
+						<strong>Date joined: </strong>
+						{{ current_user.date_added.strftime('%Y, %b %d, %H:%M:%S') }}<br>
+						
+						<strong>User id: </strong>
+						{{ current_user.id }}<br><br>
+
+						<strong>Profile pic: </strong>
+						{{ current_user.profile_pic }}<br><br>
+
+					    <a href="{{ url_for('logout') }}" class="btn btn-primary btn-sm">Logout</a>
+
+					    <a href="{{ url_for('delete_user', id=current_user.id) }}" class="btn btn-danger btn-sm">Delete</a>
+
+					</div>
+					<div class="col-4">
+					    <img src="{{ url_for('static', filename='images/default.jpg') }}" width="180" align="right" 
+					    style="filter: drop-shadow(0px 10px 3px black); border-radius: 30%;">
+					</div>
+				</div>
+			</div>			
 		</p>
-	    <a href="{{ url_for('logout') }}" class="btn btn-primary btn-sm">Logout</a>
-
-	    <a href="{{ url_for('delete_user', id=current_user.id) }}" class="btn btn-danger btn-sm">Delete</a>
-
 	  </div>
 	</div>
 
@@ -65,7 +76,8 @@
 	    <p class="card-text">
 
 			<form action="/dashboard" 
-				  method="POST">
+				  method="POST"
+				  enctype="multipart/form-data">
 				{{ form.hidden_tag() }}
 
 				{{ form.name.label(class="form-label") }}
@@ -84,6 +96,11 @@
 				{{ form.favorite_color(class="form-control", value=name_to_update.favorite_color) }}
 				<br/>
 
+				{{ form.profile_pic.label(class="form-label") }}
+				{{ form.profile_pic(class="form-control",
+									value=name_to_update.profile_pic) }}
+
+				<br/>
 				{{ form.submit(class="btn btn-secondary btn-sm") }}
 			</form>
 		</p>
