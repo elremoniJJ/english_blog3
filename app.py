@@ -86,7 +86,8 @@ import pytz
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = "secret_key"
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://dlyegtyeuffupk:dcf8b09b981a8781ebfee848ec1dc7f180950c1fea6fec39bf4bbbd5a7c03d80@ec2-54-228-125-183.eu-west-1.compute.amazonaws.com:5432/da69lhjv2b3li'
+#'sqlite:///users.db'
 
 UPLOAD_FOLDER = "static/images/"
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
