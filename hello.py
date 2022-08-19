@@ -1,3 +1,40 @@
+##################################################################
+#INDEX
+
+#	1. Import library
+#	2. Create App
+#	3. Login Manager
+#	4. Models
+#	5. Forms
+#	6. User routes
+#	7. Post routes
+#	8. Error routes
+
+
+
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
+##################################################################
+#Import library
+
 from flask import Flask, render_template, flash, request, redirect, url_for
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField, PasswordField, BooleanField 
@@ -15,6 +52,30 @@ from datetime import datetime
 from pytz import timezone
 
 
+
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
+##################################################################
+#Create App
+
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = "secret_key"
@@ -25,8 +86,29 @@ migrate = Migrate(app, db)
 
 
 
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
 ##################################################################
 #Login Manager
+
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
@@ -39,8 +121,40 @@ def load_user(user_id):
 
 
 
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
 ##################################################################
 #The Models
+
+class Posts(db.Model):
+	tz = timezone('Asia/Ho_Chi_Minh')
+
+	id = db.Column(db.Integer, primary_key=True)
+	title = db.Column(db.String(50), nullable=False)
+	content = db.Column(db.Text)
+	#author = db.Column(db.String(50))
+	date_posted = db.Column(db.DateTime, default=datetime.now(tz))
+	slug = db.Column(db.String(255))
+	#Create foreign key to link users to their posts
+	poster_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+
 class Users(db.Model, UserMixin):
 	tz = timezone('Asia/Ho_Chi_Minh')
 
@@ -52,6 +166,9 @@ class Users(db.Model, UserMixin):
 	date_added = db.Column(db.DateTime, default=datetime.now(tz))
 
 	password_hash = db.Column(db.String(128))
+
+	# User can have many posts
+	posts = db.relationship('Posts', backref='poster')
 
 	@property
 	def password(self):
@@ -71,18 +188,30 @@ class Users(db.Model, UserMixin):
 
 
 
-class Posts(db.Model):
-	tz = timezone('Asia/Ho_Chi_Minh')
 
-	id = db.Column(db.Integer, primary_key=True)
-	title = db.Column(db.String(50), nullable=False)
-	content = db.Column(db.Text)
-	author = db.Column(db.String(50))
-	date_posted = db.Column(db.DateTime, default=datetime.now(tz))
-	slug = db.Column(db.String(255))
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
 
 ###################################################################
 #The Form classes
+
 class UserForm(FlaskForm):
 	name = StringField("Name", validators=[DataRequired()])
 	username = StringField("Username", validators=[DataRequired()])	
@@ -113,15 +242,35 @@ class NamerForm(FlaskForm):
 
 
 
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
 ###################################################################
-#The Routes
+#User Routes
+
 @app.route('/')
 def index():
 	tz = timezone('Asia/Ho_Chi_Minh')
 	date = datetime.now(tz).strftime("%Y, %b %d")
 	time = datetime.now(tz).strftime("%H:%M:%S")
 	return render_template("index.html", date=date, time=time)
-
 
 
 @app.route('/user/add', methods=['GET', 'POST'])
@@ -141,11 +290,26 @@ def add_user():
 						 email=form.email.data,
 						 favorite_color=form.favorite_color.data,
 						 password_hash=hashed_pw)
-			db.session.add(user)
-			db.session.commit()
 
-			name = form.name.data 
-			flash(f"{name} added successfully!")
+			try:
+				db.session.add(user)
+				db.session.commit()
+
+				name = form.name.data 
+
+				form.name.data = ''
+				form.username.data = ''
+				form.email.data = ''
+				form.favorite_color.data = ''
+				form.password_hash.data = ''
+				form.confirm_password.data = ''
+
+				flash(f"{name} added successfully!")
+				return redirect(url_for('login'))
+
+			except:
+				flash(f"Whoops! Something went wrong. Please try again")				
+
 		else:
 			flash(f"Email already exists")
 
@@ -156,47 +320,12 @@ def add_user():
 		form.password_hash.data = ''
 		form.confirm_password.data = ''
 
-	our_users = Users.query.order_by(Users.date_added)
-	return render_template("add_user.html", 
-							form=form,
-							name=name,
-							our_users=our_users)
+	return render_template("add_user.html", form=form)
 
 
-
-@app.route('/update/<int:id>', methods=['GET', 'POST'])
+@app.route('/delete_user/<int:id>')
 @login_required
-def update(id):
-	form = UserForm()
-	name_to_update = Users.query.get_or_404(id)
-
-	if request.method == 'POST': 
-		name_to_update.name = request.form['name']
-		name_to_update.email = request.form['email']
-		name_to_update.favorite_color = request.form['favorite_color']
-		try:
-
-			db.session.commit()
-			flash("User updated successfully!")
-			return render_template("update.html",
-									form=form,
-									name_to_update=name_to_update)
-
-		except:
-			flash("Error! Something went wrong with update attempt")
-			return render_template("update.html",
-									form=form,
-									name_to_update=name_to_update)
-
-	else:
-		return render_template("update.html",
-								form=form,
-								name_to_update=name_to_update)		
-
-
-@app.route('/delete/<int:id>')
-@login_required
-def delete(id):
+def delete_user(id):
 	name = None
 	form = UserForm()
 
@@ -204,21 +333,111 @@ def delete(id):
 	try:
 		db.session.delete(user_to_delete)
 		db.session.commit()
-		flash('User deleted successfully!')
 
-		our_users = Users.query.order_by(Users.date_added)
-		return render_template("add_user.html", 
-								form=form,
-								name=name,
-								our_users=our_users)
+		logout_user()
+
+		flash('User deleted successfully!')
+		return render_template("index.html")
+
 	except:
 		flash('Whoops! Something went wrong. Please try again, and let me know if problem persists')
-		our_users = Users.query.order_by(Users.date_added)
-		return render_template("add_user.html", 
-								form=form,
-								name=name,
-								our_users=our_users)
+		return render_template("index.html")
 
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+	form = LoginForm()
+
+	if form.validate_on_submit():
+		user = Users.query.filter_by(username=form.username.data).first()
+		if user:
+			password_check = check_password_hash(user.password_hash, 
+												form.password.data)
+			if password_check:
+				form.password.data = ''
+				form.username.data = ''
+				login_user(user)
+
+				flash("You're logged in!")
+				return redirect(url_for('dashboard'))
+
+			else:
+				flash("Password doesn't match in database")
+				form.password.data = ''
+
+		else:
+			flash("Username doesn't exist in database")
+			form.username.data = ''
+
+	return render_template('login.html', form=form)
+
+
+@app.route('/logout')
+def logout():
+	logout_user()
+	flash("You're logged out!")
+	return redirect(url_for('index'))
+
+
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+	
+	form = UserForm()
+	id = current_user.id
+	name_to_update = Users.query.get_or_404(id)
+
+	if request.method == 'POST': 
+		name_to_update.username = request.form['username']
+		name_to_update.name = request.form['name']
+		name_to_update.email = request.form['email']
+		name_to_update.favorite_color = request.form['favorite_color']
+		try:
+
+			db.session.commit()
+			flash("User updated successfully!")
+			return render_template("dashboard.html",
+									form=form,
+									name_to_update=name_to_update)
+
+		except:
+			flash("Error! Something went wrong with update attempt")
+			return render_template("dashboard.html",
+									form=form,
+									name_to_update=name_to_update)
+
+
+	return render_template("dashboard.html",
+							form=form,
+							name_to_update=name_to_update)
+	return render_template('dashboard.html',
+							form=form,
+							name_to_update=name_to_update)
+
+
+
+
+
+
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
+###################################################################
+#Post Routes
 
 @app.route('/add-post', methods=['GET', 'POST'])
 @login_required
@@ -248,6 +467,7 @@ def all_posts():
 	return render_template('all_posts.html', posts=posts)
 
 
+#Specific Post
 @app.route('/post/<int:id>')
 def post(id):
 	post = Posts.query.get_or_404(id)
@@ -255,6 +475,7 @@ def post(id):
 	return render_template('post.html', post=post, date=date)	
 
 
+#Specific Post - Edit
 @app.route('/post/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_post(id):
@@ -278,6 +499,7 @@ def edit_post(id):
 	return render_template('edit_post.html', form=form, id=post.id)
 
 
+#Specific Post - Delete
 @app.route('/delete_post/<int:id>')
 @login_required
 def delete_post(id):
@@ -293,41 +515,29 @@ def delete_post(id):
 		return redirect(url_for('all_posts'))
 
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-	form = LoginForm()
-
-	if form.validate_on_submit():
-		user = Users.query.filter_by(username=form.username.data).first()
-		if user:
-			password_check = check_password_hash(user.password_hash, 
-												form.password.data)
-			if password_check:
-				form.password.data = ''
-				form.username.data = ''
-				login_user(user)
-
-				flash("You're logged in!")
-				return redirect(url_for('index'))
-
-			else:
-				flash("Password doesn't match in database")
-				form.password.data = ''
-
-		else:
-			flash("Username doesn't exist in database")
-			form.username.data = ''
-
-	return render_template('login.html', form=form)
 
 
 
-@app.route('/logout')
-def logout(user):
-	logout_user(user)
-	flash("You're logged out!")
-	return redirect(url_for('index'))
 
+								#
+							#	#	#
+						#	#	#	#	#
+					#	#	#	#	#	#	#
+						#	#	#	#	#
+							#	#	#
+								#
+
+
+
+
+
+
+
+
+
+
+###################################################################
+#Error Routes
 
 @app.errorhandler(404)
 def page_not_found(e):

@@ -1,0 +1,98 @@
+
+
+
+{% extends 'base.html' %}
+
+{% block content %}
+
+	{% for message in get_flashed_messages() %}
+		<div class="alert alert-primary alert-dismissible fade show" role="alert">
+  			{{ message }}
+  			<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+		</div>
+
+	{% endfor %}
+
+
+	<h1>Dashboard</h1>
+	<br>
+
+	<div class="card">
+	  <div class="card-header">
+		    {{ current_user.name }}
+	  </div>
+	  <div class="card-body">
+	    <h5 class="card-title">Current user information:</h5>
+	    <p class="card-text">
+
+			<strong>Username: </strong>
+			{{ current_user.username }}<br>
+			
+			<strong>Email: </strong>
+			{{ current_user.email }}<br>
+			
+			<strong>Favourite colour: </strong>
+			{{ current_user.favorite_color }}<br>
+			
+			<strong>Date joined: </strong>
+			{{ current_user.date_added.strftime('%Y, %b %d, %H:%M:%S') }}<br>
+			
+			<strong>User id: </strong>
+			{{ current_user.id }}<br>
+			
+			<strong>User hashed password: </strong>
+			{{ current_user.password_hash }}<br>
+
+		</p>
+	    <a href="{{ url_for('logout') }}" class="btn btn-primary btn-sm">Logout</a>
+
+	    <a href="{{ url_for('delete_user', id=current_user.id) }}" class="btn btn-danger btn-sm">Delete</a>
+
+	  </div>
+	</div>
+
+
+	<br>
+	<hr>
+	<br/>
+
+
+	<div class="card">
+	  <div class="card-header">
+		    Update user information here:
+	  </div>		
+	  <div class="card-body">
+	    <p class="card-text">
+
+			<form action="/dashboard" 
+				  method="POST">
+				{{ form.hidden_tag() }}
+
+				{{ form.name.label(class="form-label") }}
+				{{ form.name(class="form-control", value=name_to_update.name) }}
+				<br/>
+
+				{{ form.username.label(class="form-label") }}
+				{{ form.username(class="form-control", value=name_to_update.username) }}
+				<br/>
+
+				{{ form.email.label(class="form-label") }}
+				{{ form.email(class="form-control", value=name_to_update.email) }}
+				<br/>
+
+				{{ form.favorite_color.label(class="form-label") }}
+				{{ form.favorite_color(class="form-control", value=name_to_update.favorite_color) }}
+				<br/>
+
+				{{ form.submit(class="btn btn-secondary btn-sm") }}
+			</form>
+		</p>
+	  </div>
+	</div>
+
+
+	<br><br><br>
+
+
+
+{% endblock %}

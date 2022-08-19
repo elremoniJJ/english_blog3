@@ -8,25 +8,36 @@
     </button>
 
     <ul class="navbar-nav me-auto mb-2 mb-lg-0" style="background-color: #4C8CC4; border-radius: 25px;">
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-      </li>
+
+      {% if current_user.is_authenticated %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+        </li>
+
+      {% else %}
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('add_user') }}">Register</a>
+        </li>
+      {% endif %}
+
     </ul>
 
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
       <ul class="navbar-nav me-auto mb-2 mb-lg-0">
 
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('add_user') }}">Add User</a>
-        </li>
+        {% if current_user.is_authenticated %}
+          <li class="nav-item">
+            <a class="nav-link" href="{{ url_for('add_post') }}">Add Post</a>
+          </li>
+        {% else %}
 
-        <li class="nav-item">
-          <a class="nav-link" href="{{ url_for('add_post') }}">Add Post</a>
-        </li>
-
+        {% endif %}        
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('all_posts') }}">All Posts</a>
         </li>
