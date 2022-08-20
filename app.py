@@ -354,18 +354,19 @@ def delete_user(id):
 	form = UserForm()
 
 	user_to_delete = Users.query.get_or_404(id)
-	try:
-		db.session.delete(user_to_delete)
-		db.session.commit()
+	if user_to_delete.id == current_user.id or user_to_delete.id == 1:
+		try:
+			db.session.delete(user_to_delete)
+			db.session.commit()
 
-		logout_user()
+			logout_user()
 
-		flash('User deleted successfully!')
-		return render_template("index.html")
+			flash('User deleted successfully!')
+			return render_template("index.html")
 
-	except:
-		flash('Whoops! Something went wrong. Please try again, and let me know if problem persists')
-		return render_template("index.html")
+		except:
+			flash('Whoops! Something went wrong. Please try again, and let me know if problem persists')
+			return render_template("index.html")
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -547,7 +548,7 @@ def edit_post(id):
 @login_required
 def delete_post(id):
 	post = Posts.query.get_or_404(id)
-	if post.poster.id == current_user.id:
+	if post.poster.id == current_user.id or post.poster.id == 1:
 		try:
 			db.session.delete(post)
 			db.session.commit()
