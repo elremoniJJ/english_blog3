@@ -548,30 +548,35 @@ def edit_post(id):
 @login_required
 def delete_post(id):
 	post = Posts.query.get_or_404(id)
-	if post.poster.id == current_user.id:
-		try:
-			db.session.delete(post)
-			db.session.commit()
-			flash('Post has been deleted!')
-			return redirect(url_for('all_posts'))
+	try:
+		if post.poster.id == current_user.id:
+			try:
+				db.session.delete(post)
+				db.session.commit()
+				flash('Post has been deleted!')
+				return redirect(url_for('all_posts'))
 
-		except:
-			flash('Something went wrong :/ Please try again later')
-			return redirect(url_for('all_posts'))
+			except:
+				flash('Something went wrong :/ Please try again later')
+				return redirect(url_for('all_posts'))
 
-	elif current_user.id == 1:
-		try:
-			db.session.delete(post)
-			db.session.commit()
-			flash('Post has been deleted!')
-			return redirect(url_for('all_posts'))
+		else:
+				return redirect(url_for('all_posts'))
+				
+	except:
+		if current_user.id == 1:
+			try:
+				db.session.delete(post)
+				db.session.commit()
+				flash('Post has been deleted!')
+				return redirect(url_for('all_posts'))
 
-		except:
-			flash('Something went wrong :/ Please try again later')
-			return redirect(url_for('all_posts'))
+			except:
+				flash('Something went wrong :/ Please try again later')
+				return redirect(url_for('all_posts'))
 
-	else:
-		return redirect(url_for('all_posts'))
+		else:
+			return redirect(url_for('all_posts'))
 
 
 
