@@ -292,6 +292,7 @@ def admin():
 		posts = Posts.query.all()
 		return render_template("admin.html", users=users, posts=posts)
 	else:
+		flash("Unfortunately only admin can access admin page")		
 		return redirect(url_for('index'))
 
 
