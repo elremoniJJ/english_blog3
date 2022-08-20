@@ -354,7 +354,7 @@ def delete_user(id):
 	form = UserForm()
 
 	user_to_delete = Users.query.get_or_404(id)
-	if user_to_delete.id == current_user.id or user_to_delete.id == 1:
+	if user_to_delete.id == current_user.id or current_user.id == 1:
 		try:
 			db.session.delete(user_to_delete)
 			db.session.commit()
@@ -548,7 +548,7 @@ def edit_post(id):
 @login_required
 def delete_post(id):
 	post = Posts.query.get_or_404(id)
-	if post.poster.id == current_user.id or post.poster.id == 1:
+	if post.poster.id == current_user.id or current_user.id == 1:
 		try:
 			db.session.delete(post)
 			db.session.commit()
