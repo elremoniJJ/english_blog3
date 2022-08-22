@@ -562,7 +562,7 @@ def delete_post(id):
 
 		else:
 				return redirect(url_for('all_posts'))
-				
+
 	except:
 		if current_user.id == 1:
 			try:
@@ -609,7 +609,7 @@ def search():
 	if form.validate_on_submit():
 		post.searched = form.searched.data
 		
-		posts = posts.filter(Posts.content.like('%' + post.searched + '%'))
+		posts = posts.filter(Posts.poster.like('%' + post.searched + '%'))
 		posts = posts.order_by(Posts.title).all()
 
 		return render_template('searched.html', form=form, 
