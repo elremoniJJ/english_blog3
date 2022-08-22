@@ -283,7 +283,8 @@ def index():
 	tz = pytz.timezone('Asia/Ho_Chi_Minh')
 	date = datetime.now(tz).strftime("%Y, %b %d")
 	time = datetime.now(tz).strftime("%H:%M:%S")
-	return render_template("index.html", date=date, time=time)
+	testDB = os.environ.get('DATABASE_URL')
+	return render_template("index.html", date=date, time=time, testDB=testDB)
 
 
 @app.route('/admin')
