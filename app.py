@@ -86,8 +86,7 @@ import pytz
 app = Flask(__name__)
 
 app.config['SECRET_KEY'] = "secret_key"
-testDB = os.environ.get('DATABASE_URL')
-app.config['SQLALCHEMY_DATABASE_URI'] = testDB
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DB_URL')
 #'postgresql://dlyegtyeuffupk:dcf8b09b981a8781ebfee848ec1dc7f180950c1fea6fec39bf4bbbd5a7c03d80@ec2-54-228-125-183.eu-west-1.compute.amazonaws.com:5432/da69lhjv2b3li'
 #os.environ.get('DATABASE_URL')
 #'postgresql://dlyegtyeuffupk:dcf8b09b981a8781ebfee848ec1dc7f180950c1fea6fec39bf4bbbd5a7c03d80@ec2-54-228-125-183.eu-west-1.compute.amazonaws.com:5432/da69lhjv2b3li'
