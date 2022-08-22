@@ -609,7 +609,7 @@ def search():
 	if form.validate_on_submit():
 		post.searched = form.searched.data
 		
-		posts = posts.filter(Posts.poster.like('%' + post.searched + '%'))
+		posts = posts.filter(Posts.title.like('%' + post.searched + '%'))
 		posts = posts.order_by(Posts.title).all()
 
 		return render_template('searched.html', form=form, 
